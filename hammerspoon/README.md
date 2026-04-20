@@ -12,8 +12,15 @@ An F-key press focuses a chosen app on the built-in Retina display, filling the 
 |---|---|
 | F13 | Slack |
 | F14 | Gitodo |
+| F15 | Google Chrome |
 
 Each F-key is emitted by the Cheapino split keyboard, configured (via [Vial](https://vial.rocks/)) to remap one of its letter keys to the corresponding F-key. The main keyboard still types the original letter normally; only the secondary keyboard triggers the jump. F13-F19 are chosen because they have no default macOS bindings and never collide with anything a normal keyboard emits.
+
+### Cycling across windows
+
+When the target app has multiple standard windows (e.g. several Chrome windows), repeated presses of the hotkey cycle through them: first press brings one window to the MacBook display, second press swaps to the next, and so on, wrapping around. State is tracked per app, so F13 and F15 maintain independent cursors.
+
+Cycling order is by window ID (stable across focus changes) rather than MRU order. Using MRU would make cycling collapse to a single window: focusing a window bumps it to the front of `app:allWindows()`, so the "next" window after it would just be itself.
 
 ### Adding another app
 

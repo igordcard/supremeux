@@ -1,12 +1,44 @@
-local function pickAppWindow(app)
-	-- Prefer a standard window (skips popovers, huddle mini-windows, etc.)
+-- Per-app state: remembers which window was last picked so repeated presses cycle.
+local lastWindowIdByApp = {}
+
+local function standardWindowsSorted(app)
+	local windows = {}
 	for _, w in ipairs(app:allWindows()) do
-		if w:isStandard() then return w end
+		if w:isStandard() then table.insert(windows, w) end
 	end
-	-- Fall back to any window, then mainWindow/focusedWindow
-	local all = app:allWindows()
-	if #all > 0 then return all[1] end
-	return app:mainWindow() or app:focusedWindow()
+	-- Sort by window id for a stable cycle order. app:allWindows() reorders
+	-- by recency as we focus windows, which would break cycling.
+	table.sort(windows, function(a, b) return a:id() < b:id() end)
+	return windows
+end
+
+local function pickAppWindow(app, appName)
+	local windows = standardWindowsSorted(app)
+
+	if #windows == 0 then
+		-- Fall back to any window, then the app's own primary handles.
+		local all = app:allWindows()
+		if #all > 0 then return all[1] end
+		return app:mainWindow() or app:focusedWindow()
+	end
+
+	if #windows == 1 then
+		lastWindowIdByApp[appName] = windows[1]:id()
+		return windows[1]
+	end
+
+	-- Cycle: pick the window after the last-picked one (wrapping around).
+	-- If the last id is unknown or gone, start at the first.
+	local lastId = lastWindowIdByApp[appName]
+	local nextIdx = 1
+	for i, w in ipairs(windows) do
+		if w:id() == lastId then
+			nextIdx = (i % #windows) + 1
+			break
+		end
+	end
+	lastWindowIdByApp[appName] = windows[nextIdx]:id()
+	return windows[nextIdx]
 end
 
 local function debugApp(app)
@@ -28,6 +60,10 @@ local function placeOnScreen(win, target)
 		return
 	end
 
+	-- Focus the picked window specifically (important for cycling: setFrame
+	-- alone doesn't bring a background window of the same app to the front).
+	win:focus()
+
 	-- Fill the target screen's frame (reliable; no Space switching).
 	win:setFrame(target:frame())
 end
@@ -47,7 +83,7 @@ local function focusAppOnScreen(appName, screenPattern)
 	local function tryPlace(attempt)
 		local app = hs.application.get(appName)
 		if app then
-			local w = pickAppWindow(app)
+			local w = pickAppWindow(app, appName)
 			if w then
 				placeOnScreen(w, target)
 				return
@@ -65,3 +101,4 @@ end
 
 hs.hotkey.bind({}, "F13", function() focusAppOnScreen("Slack", "Retina Display") end)
 hs.hotkey.bind({}, "F14", function() focusAppOnScreen("Gitodo", "Retina Display") end)
+hs.hotkey.bind({}, "F15", function() focusAppOnScreen("Google Chrome", "Retina Display") end)
