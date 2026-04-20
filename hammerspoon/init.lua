@@ -1,17 +1,17 @@
-local function pickSlackWindow(slack)
-	-- Try standard visible window first
-	for _, w in ipairs(slack:allWindows()) do
+local function pickAppWindow(app)
+	-- Prefer a standard window (skips popovers, huddle mini-windows, etc.)
+	for _, w in ipairs(app:allWindows()) do
 		if w:isStandard() then return w end
 	end
-	-- Then any window at all
-	local all = slack:allWindows()
+	-- Fall back to any window, then mainWindow/focusedWindow
+	local all = app:allWindows()
 	if #all > 0 then return all[1] end
-	return slack:mainWindow() or slack:focusedWindow()
+	return app:mainWindow() or app:focusedWindow()
 end
 
-local function debugSlack(slack)
+local function debugApp(app)
 	local rows = {}
-	for _, w in ipairs(slack:allWindows()) do
+	for _, w in ipairs(app:allWindows()) do
 		table.insert(rows, string.format("[%s] std=%s vis=%s min=%s",
 			w:title(), tostring(w:isStandard()), tostring(w:isVisible()), tostring(w:isMinimized())))
 	end
@@ -30,25 +30,24 @@ local function placeOnScreen(win, target)
 
 	-- Fill the target screen's frame (reliable; no Space switching).
 	win:setFrame(target:frame())
-	hs.alert.show("Slack -> " .. target:name())
 end
 
-hs.hotkey.bind({}, "F13", function()
-	local target = hs.screen.find("Retina Display")
+local function focusAppOnScreen(appName, screenPattern)
+	local target = hs.screen.find(screenPattern)
 	if not target then
 		local names = hs.fnutils.map(hs.screen.allScreens(), function(s) return s:name() end)
 		hs.alert.show("No target. Screens: " .. hs.inspect(names))
 		return
 	end
 
-	-- `open -a` both focuses Slack and triggers the "reopen" event,
-	-- which restores a window if Slack was closed to the menu bar.
-	hs.execute("/usr/bin/open -a Slack")
+	-- `open -a` both focuses the app and triggers the AppKit "reopen" event,
+	-- which restores a window if the app was closed to the menu bar.
+	hs.execute("/usr/bin/open -a '" .. appName .. "'")
 
 	local function tryPlace(attempt)
-		local slack = hs.application.get("Slack")
-		if slack then
-			local w = pickSlackWindow(slack)
+		local app = hs.application.get(appName)
+		if app then
+			local w = pickAppWindow(app)
 			if w then
 				placeOnScreen(w, target)
 				return
@@ -57,9 +56,12 @@ hs.hotkey.bind({}, "F13", function()
 		if attempt < 20 then
 			hs.timer.doAfter(0.15, function() tryPlace(attempt + 1) end)
 		else
-			hs.alert.show("No Slack window. " .. (slack and debugSlack(slack) or "app not found"), 5)
+			hs.alert.show("No " .. appName .. " window. " .. (app and debugApp(app) or "app not found"), 5)
 		end
 	end
 
 	tryPlace(1)
-end)
+end
+
+hs.hotkey.bind({}, "F13", function() focusAppOnScreen("Slack", "Retina Display") end)
+hs.hotkey.bind({}, "F14", function() focusAppOnScreen("Gitodo", "Retina Display") end)

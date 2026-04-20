@@ -2,18 +2,37 @@
 
 [Hammerspoon](https://www.hammerspoon.org/) is a Lua-scriptable macOS automation tool. The config here lives at `~/.hammerspoon/init.lua` on the target machine.
 
-## Bring Slack to the MacBook display
+## Bring an app to the MacBook display
 
-When you press **F13**, Slack is focused on the built-in Retina display, filling the screen. It works whether Slack is already frontmost, hidden, minimized, in native fullscreen on another monitor, or closed to the menu bar with no windows open.
+An F-key press focuses a chosen app on the built-in Retina display, filling the screen. It works whether the app is already frontmost, hidden, minimized, in native fullscreen on another monitor, or closed to the menu bar with no windows open.
+
+### Current bindings
+
+| Key | App |
+|---|---|
+| F13 | Slack |
+| F14 | Gitodo |
+
+Each F-key is emitted by the Cheapino split keyboard, configured (via [Vial](https://vial.rocks/)) to remap one of its letter keys to the corresponding F-key. The main keyboard still types the original letter normally; only the secondary keyboard triggers the jump. F13-F19 are chosen because they have no default macOS bindings and never collide with anything a normal keyboard emits.
+
+### Adding another app
+
+Add one line to `init.lua`:
+
+```lua
+hs.hotkey.bind({}, "F15", function() focusAppOnScreen("Linear", "Retina Display") end)
+```
+
+The second argument is a Lua pattern matched against screen names via `hs.screen.find`, so a unique substring is enough. Beware that hyphens are pattern metacharacters: use `"Retina Display"` rather than `"Built-in Retina Display"`, or escape as `"Built%-in Retina Display"`.
 
 ### How it works
 
-1. **F13 is the trigger.** F13 is chosen because it has no default macOS binding and is easy to emit from a secondary keyboard without colliding with the main keyboard. The Cheapino split keyboard is configured (via [Vial](https://vial.rocks/)) to remap its `S` key to F13; the main keyboard still types a normal `S`.
-2. **Hammerspoon catches the F13 keypress** and runs the handler in `init.lua`.
-3. **Target screen lookup.** `hs.screen.find("Retina Display")` matches the built-in display by substring. Note: the argument is a Lua pattern, so the literal name "Built-in Retina Display" would need the hyphen escaped (`"Built%-in Retina Display"`); using "Retina Display" sidesteps that.
-4. **Reopen Slack if needed.** `open -a Slack` is invoked unconditionally. This is the equivalent of clicking the Dock icon: it focuses the app AND triggers the AppKit "reopen" event, which asks Slack to restore a window when none exist (the menu-bar-only state). A plain `app:activate()` does not trigger reopen.
-5. **Poll for a window.** The handler retries up to 20 times at 150ms intervals waiting for `slack:allWindows()` to return something, since the reopened window is not instant.
-6. **Pick the right window.** Prefer a window where `isStandard()` is true (skips popovers, huddle mini-windows, notification surfaces). Fall back to any window, then `mainWindow()`/`focusedWindow()`.
+1. **An F-key is the trigger.** F13-F19 have no default macOS binding, so they never collide with anything a regular keyboard sends.
+2. **Hammerspoon catches the keypress** and runs `focusAppOnScreen(appName, screenPattern)`.
+3. **Target screen lookup.** `hs.screen.find(screenPattern)` matches by substring. The argument is a Lua pattern, so special characters (notably `-`) must be escaped if you want them literal.
+4. **Reopen the app if needed.** `open -a <AppName>` is invoked unconditionally. This is the equivalent of clicking the Dock icon: it focuses the app AND triggers the AppKit "reopen" event, which asks the app to restore a window when none exist (the menu-bar-only state). A plain `app:activate()` does not trigger reopen.
+5. **Poll for a window.** The handler retries up to 20 times at 150ms intervals waiting for `app:allWindows()` to return something, since a reopened window is not instant.
+6. **Pick the right window.** Prefer a window where `isStandard()` is true (skips popovers, mini-windows, notification surfaces). Fall back to any window, then `mainWindow()`/`focusedWindow()`.
 7. **Place the window.**
    - If minimized, unminimize.
    - If in native macOS fullscreen (its own Space), exit fullscreen, wait 1.2s for the Space animation to complete, then retry. Without that wait, the move silently no-ops because the window has not yet left its Space.
@@ -21,7 +40,7 @@ When you press **F13**, Slack is focused on the built-in Retina display, filling
 
 ### Why `setFrame` instead of `setFullScreen(true)`
 
-Native fullscreen (the green-button behavior) creates a separate Space for the window. That means every F13 press would either create a new Space or leave the window stranded in an old one, fighting the user's Mission Control state. Filling the screen with `setFrame` keeps Slack on the current Space and is the behavior most people actually want from "put Slack fullscreen on this monitor".
+Native fullscreen (the green-button behavior) creates a separate Space for the window. That means every hotkey press would either create a new Space or leave the window stranded in an old one, fighting the user's Mission Control state. Filling the screen with `setFrame` keeps the app on the current Space and is the behavior most people actually want from "put X fullscreen on this monitor".
 
 ## Installation
 
