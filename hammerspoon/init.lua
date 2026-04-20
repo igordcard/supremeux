@@ -76,12 +76,25 @@ local function focusAppOnScreen(appName, screenPattern)
 		return
 	end
 
-	-- `open -a` both focuses the app and triggers the AppKit "reopen" event,
-	-- which restores a window if the app was closed to the menu bar.
+	-- Fast path: app is already running and has a window we can pick.
+	-- Skip `open -a` so the MRU window doesn't flash forward before we
+	-- switch to our (possibly different, e.g. cycled) target.
+	local app = hs.application.get(appName)
+	if app then
+		local w = pickAppWindow(app, appName)
+		if w then
+			placeOnScreen(w, target)
+			return
+		end
+	end
+
+	-- Slow path: app isn't running, or is running without a pickable window
+	-- (menu-bar mode). `open -a` both launches and triggers the AppKit
+	-- "reopen" event, which restores a window in the menu-bar case.
 	hs.execute("/usr/bin/open -a '" .. appName .. "'")
 
 	local function tryPlace(attempt)
-		local app = hs.application.get(appName)
+		app = hs.application.get(appName)
 		if app then
 			local w = pickAppWindow(app, appName)
 			if w then
