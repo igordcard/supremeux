@@ -212,27 +212,37 @@ local function pasteAndEnter(command)
 	end)
 end
 
--- Bring Ghostty forward with a fresh window, then paste `command` + Enter
--- into it. Works whether Ghostty was already running, running with no
--- windows (menu-bar-only), or not running at all.
-local function runInNewGhosttyWindow(command)
+-- Bring Ghostty forward with a fresh shell, then optionally paste
+-- `command` + Enter into it. `newShellKey` is the single letter to
+-- press with Cmd: "n" for a new window (fresh $HOME shell), "t" for a
+-- new tab (inherits cwd from the current tab). If Ghostty was not
+-- running or had no windows, it is launched; the keystroke is skipped
+-- in that case because the freshly-opened window is already a new
+-- shell.
+local function runInFreshGhosttyShell(newShellKey, command)
 	local ghostty = hs.application.get("Ghostty")
 	local hasWindow = ghostty and #ghostty:allWindows() > 0
+
+	local function typeCommandIfAny()
+		if command then
+			hs.timer.doAfter(0.6, function() pasteAndEnter(command) end)
+		end
+	end
 
 	if hasWindow then
 		ghostty:activate()
 		hs.timer.doAfter(0.15, function()
-			-- Cmd+N for a fresh shell, since an existing window may have a
-			-- partial command typed, be running vim/claude, etc.
-			hs.eventtap.keyStroke({ "cmd" }, "n")
-			-- Wait for the new window's shell to reach a prompt.
-			hs.timer.doAfter(0.6, function() pasteAndEnter(command) end)
+			hs.eventtap.keyStroke({ "cmd" }, newShellKey)
+			typeCommandIfAny()
 		end)
 		return
 	end
 
-	-- Launch (or reopen) Ghostty; it will open exactly one window.
+	-- Launch (or reopen) Ghostty; it will open exactly one window. "New
+	-- tab / new window" distinction is moot here since there is no
+	-- existing tab to inherit cwd from.
 	hs.execute("/usr/bin/open -a Ghostty")
+	if not command then return end
 	local tries = 0
 	local function waitThenPaste()
 		tries = tries + 1
@@ -257,7 +267,7 @@ hs.hotkey.bind({}, "F17", function()
 	-- cd into the notes dir first so `ls`/tab-completion is easy after vim
 	-- exits, but vim the absolute path so shell history stays useful from
 	-- any cwd.
-	runInNewGhosttyWindow("cd " .. shq(dir) .. " && vim " .. shq(p))
+	runInFreshGhosttyShell("n", "cd " .. shq(dir) .. " && vim " .. shq(p))
 end)
 
 -- F18: open the current repo/PR on GitHub, using the cwd captured by the
@@ -297,4 +307,35 @@ hs.hotkey.bind({}, "F18", function()
 	if not ok then
 		hs.alert.show("gh failed in " .. cwd .. ": " .. (out or ""), 5)
 	end
+end)
+
+-- F20: open a fresh Ghostty window in $HOME and launch Claude.
+--
+-- Cmd+N inherits cwd from the current Ghostty tab. Directly launching
+-- Ghostty's own binary (or `open -n -a Ghostty`) turned out to be
+-- unsafe: the child can block Hammerspoon's run loop, and repeated
+-- F20 presses while blocked produced a storm of windows and a frozen
+-- Hammerspoon. `open -n` is also refused by Ghostty's single-instance
+-- policy on some setups.
+--
+-- Instead, send Cmd+N and paste `cd && claude` (bare `cd` goes to
+-- $HOME in zsh, then we launch Claude there). The window appears
+-- briefly in the inherited cwd, then snaps to $HOME and drops into
+-- Claude. Reliable, no blocking, no freeze.
+hs.hotkey.bind({}, "F20", function()
+	runInFreshGhosttyShell("n", "cd && claude")
+end)
+
+-- "F21" (actually Shift+F16): open a new Ghostty tab (which inherits
+-- the current tab's cwd under Ghostty's defaults) and launch Claude
+-- CLI in it. Pair this with an existing Ghostty tab sitting in the
+-- repo you want Claude to start in; a new tab keeps the same working
+-- directory, and `claude` picks that up as its project context.
+--
+-- Bound to Shift+F16 rather than F21 because macOS does not route F21+
+-- through its keycode map. The Cheapino is remapped in Vial to emit
+-- Shift+F16 for this key; the main keyboard can't produce F16 at all,
+-- so the combo is guaranteed Cheapino-only.
+hs.hotkey.bind({ "shift" }, "F16", function()
+	runInFreshGhosttyShell("t", "claude")
 end)

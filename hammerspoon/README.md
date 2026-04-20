@@ -17,6 +17,10 @@ An F-key press focuses a chosen app on the built-in Retina display, filling the 
 | F17 | New timestamped note (`YYYYMMDDTHHMMSS.md`) in `~/mygit/ej/notes/`, opened in vim inside Ghostty |
 | F18 | Open the current repo/PR on GitHub (requires shell hook, see below) |
 | F19 | Focus/cycle Zoom on the MacBook display |
+| F20 | Open a fresh Ghostty window in `$HOME` and run `claude` |
+| Shift+F16 | Open a new Ghostty tab (inherits current tab's cwd) and run `claude` |
+
+> Note: the Cheapino key physically labeled F21 is remapped in Vial to emit `Shift+F16`. macOS only routes F-keys up to F20 through its virtual-keycode map, so anything past F20 has to be expressed as a modifier + standard F-key combo. `Shift+F16` is safe because the main keyboard cannot produce F16 at all, so the combo never collides.
 
 Each F-key is emitted by the Cheapino split keyboard, configured (via [Vial](https://vial.rocks/)) to remap one of its letter keys to the corresponding F-key. The main keyboard still types the original letter normally; only the secondary keyboard triggers the jump. F13-F19 are chosen because they have no default macOS bindings and never collide with anything a normal keyboard emits.
 
