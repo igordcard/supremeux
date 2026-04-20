@@ -115,6 +115,7 @@ end
 hs.hotkey.bind({}, "F13", function() focusAppOnScreen("Slack", "Retina Display") end)
 hs.hotkey.bind({}, "F14", function() focusAppOnScreen("Gitodo", "Retina Display") end)
 hs.hotkey.bind({}, "F15", function() focusAppOnScreen("Google Chrome", "Retina Display") end)
+hs.hotkey.bind({}, "F19", function() focusAppOnScreen("zoom.us", "Retina Display") end)
 
 -- Shell quote a string for inclusion in a shell command.
 local function shq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end

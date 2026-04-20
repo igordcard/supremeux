@@ -16,6 +16,7 @@ An F-key press focuses a chosen app on the built-in Retina display, filling the 
 | F16 | Toggle default-input mic mute |
 | F17 | New timestamped note (`YYYYMMDDTHHMMSS.md`) in `~/mygit/ej/notes/`, opened in vim inside Ghostty |
 | F18 | Open the current repo/PR on GitHub (requires shell hook, see below) |
+| F19 | Focus/cycle Zoom on the MacBook display |
 
 Each F-key is emitted by the Cheapino split keyboard, configured (via [Vial](https://vial.rocks/)) to remap one of its letter keys to the corresponding F-key. The main keyboard still types the original letter normally; only the secondary keyboard triggers the jump. F13-F19 are chosen because they have no default macOS bindings and never collide with anything a normal keyboard emits.
 
