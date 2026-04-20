@@ -49,9 +49,19 @@ The second argument is a Lua pattern matched against screen names via `hs.screen
    - If in native macOS fullscreen (its own Space), exit fullscreen, wait 1.2s for the Space animation to complete, then retry. Without that wait, the move silently no-ops because the window has not yet left its Space.
    - `win:setFrame(target:frame())` sizes the window to fill the target screen. This is deliberately NOT native macOS fullscreen, to avoid spawning a new Space every invocation.
 
-## F16: mic mute toggle
+## F16: mic mute toggle (Zoom-aware)
 
-Toggles the muted state of the default macOS input device via `hs.audiodevice`. Works globally, regardless of which app is frontmost, which is the whole point: you can mute/unmute during a Zoom/Slack/Meet call without hunting for the right window. An alert flashes "Mic muted" or "Mic on" so there is no ambiguity.
+When Zoom is in a meeting, F16 invokes Zoom's "Mute audio" / "Unmute audio" menu item via the accessibility API (`app:selectMenuItem(...)`). No keystroke is sent, so it works regardless of which app is frontmost, and Zoom's "Enable Global Shortcut" setting is not required. When not in a meeting, F16 falls back to toggling `hs.audiodevice.defaultInputDevice():setMuted(...)` and flashes "Mic muted" / "Mic on".
+
+### Why not toggle the system mic directly during calls
+
+Zoom tracks its own mute state separately from macOS's input-device mute. Muting via `setMuted(true)` at the device level cuts the audio Zoom receives, but Zoom's UI continues to show the user as unmuted — other participants see the wrong state, and the speaker does not get the usual visual cue. Driving Zoom's own mute avoids this desync entirely.
+
+### Handling rapid presses
+
+Zoom's menu item is actually a toggle action, not a set-state action: its title ("Mute audio" vs "Unmute audio") reflects the current state, but invoking it just flips mute regardless of which label is showing. On rapid presses, Zoom has not yet refreshed the menu title between invocations, so `findMenuItem` returns the stale label even though `selectMenuItem` still successfully toggles. Reading the label to decide the alert text therefore drifts from reality.
+
+The handler tracks the presumed mute state locally and flips it on every press. It re-syncs from the menu label only when at least 1.5s have elapsed since the last F16 press, which covers the case where the user muted via Zoom's UI button between F16 presses. The local state is cleared when Zoom leaves the meeting (both menu items absent) so the next meeting starts fresh.
 
 ## F17: new timestamped note, opened in vim inside Ghostty
 

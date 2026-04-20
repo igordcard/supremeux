@@ -120,8 +120,59 @@ hs.hotkey.bind({}, "F19", function() focusAppOnScreen("zoom.us", "Retina Display
 -- Shell quote a string for inclusion in a shell command.
 local function shq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
 
--- F16: toggle default input mic mute
+-- F16: mic mute toggle.
+--
+-- In a Zoom meeting: invoke Zoom's mute via the accessibility API. The
+-- menu item Zoom exposes ("Mute audio" / "Unmute audio") is actually a
+-- toggle action, not a set-state action: its title reflects the current
+-- state, but invoking it just flips mute regardless of which label is
+-- shown. This matters for rapid presses, where Zoom has not yet
+-- refreshed the menu title between presses - findMenuItem returns a
+-- stale label, but selectMenuItem still toggles.
+--
+-- Strategy: track the presumed mute state locally and flip on each
+-- press. Re-sync from the menu only when enough time has passed that
+-- the label is guaranteed fresh (handles the user muting via Zoom's UI
+-- button between F16 presses). Clear the local state when Zoom leaves
+-- the meeting, so the next meeting starts fresh.
+--
+-- Outside a meeting: toggle the default input device via hs.audiodevice.
+local zoomMutedPresumed = nil
+local zoomLastToggle = 0
+
 hs.hotkey.bind({}, "F16", function()
+	local zoom = hs.application.get("zoom.us")
+	if zoom then
+		local muteAvail = zoom:findMenuItem({ "Meeting", "Mute audio" }) ~= nil
+		local unmuteAvail = zoom:findMenuItem({ "Meeting", "Unmute audio" }) ~= nil
+
+		if muteAvail or unmuteAvail then
+			local now = hs.timer.secondsSinceEpoch()
+			local stableForResync = (now - zoomLastToggle) > 1.5
+
+			-- Re-sync local state from the menu when we know it is fresh.
+			if zoomMutedPresumed == nil or stableForResync then
+				zoomMutedPresumed = unmuteAvail
+			end
+
+			-- Click whichever menu label is currently showing. Zoom treats
+			-- the invocation as a toggle either way, so exactly one of
+			-- these will succeed (the one whose label is currently in the
+			-- menu) and both cause a flip in Zoom's actual state.
+			if not zoom:selectMenuItem({ "Meeting", "Mute audio" }) then
+				zoom:selectMenuItem({ "Meeting", "Unmute audio" })
+			end
+
+			zoomMutedPresumed = not zoomMutedPresumed
+			zoomLastToggle = now
+			hs.alert.show(zoomMutedPresumed and "Mic muted" or "Mic on")
+			return
+		else
+			-- Zoom is running but not in a meeting; drop stale state.
+			zoomMutedPresumed = nil
+		end
+	end
+
 	local mic = hs.audiodevice.defaultInputDevice()
 	if not mic then
 		hs.alert.show("No default input device")
