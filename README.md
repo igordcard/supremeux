@@ -7,4 +7,4 @@ Each subdirectory is self-contained and has its own README with the full rationa
 | Tool | What it does |
 |---|---|
 | [karabiner-elements](karabiner-elements/) | Remap `Ctrl + Opt + Arrow/F/C` to the native macOS Sequoia window-tiling shortcuts so non-Apple external keyboards (no `Fn` key) can tile, fullscreen, and center windows. |
-| [hammerspoon](hammerspoon/) | F-key hotkeys that bring a chosen app (currently Slack on F13, Gitodo on F14, Google Chrome on F15) to the built-in MacBook display and fill the screen, even when the app is minimized, fullscreen elsewhere, or closed to the menu bar. Repeated presses cycle across multiple windows of the same app. Paired with Vial remaps on the Cheapino split keyboard. |
+| [hammerspoon](hammerspoon/) | F-key hotkeys from the Cheapino split keyboard: F13-F15 focus/cycle Slack, Gitodo, Chrome on the MacBook display; F16 toggles mic mute; F17 opens a new timestamped note in vim inside Ghostty; F18 opens the current repo/PR on GitHub using a zsh-precmd sidechannel. |

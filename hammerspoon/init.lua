@@ -115,3 +115,126 @@ end
 hs.hotkey.bind({}, "F13", function() focusAppOnScreen("Slack", "Retina Display") end)
 hs.hotkey.bind({}, "F14", function() focusAppOnScreen("Gitodo", "Retina Display") end)
 hs.hotkey.bind({}, "F15", function() focusAppOnScreen("Google Chrome", "Retina Display") end)
+
+-- Shell quote a string for inclusion in a shell command.
+local function shq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
+
+-- F16: toggle default input mic mute
+hs.hotkey.bind({}, "F16", function()
+	local mic = hs.audiodevice.defaultInputDevice()
+	if not mic then
+		hs.alert.show("No default input device")
+		return
+	end
+	local muted = not mic:muted()
+	mic:setMuted(muted)
+	hs.alert.show(muted and "Mic muted" or "Mic on")
+end)
+
+-- F17: create a new timestamped note and open it in vim inside Ghostty
+--
+-- ~/mygit/ej/notes/YYYYMMDDTHHMMSS.md (second-granularity uniqueness).
+local function nextNotePath()
+	local home = os.getenv("HOME")
+	local dir = home .. "/mygit/ej/notes"
+	hs.execute("/bin/mkdir -p " .. shq(dir))
+	local stamp = os.date("%Y%m%dT%H%M%S")
+	local p = string.format("%s/%s.md", dir, stamp)
+	hs.execute("/usr/bin/touch " .. shq(p))
+	return p
+end
+
+-- Paste `command` into the frontmost app via the clipboard, then send
+-- Return. Paste is far more reliable than hs.eventtap.keyStrokes, which
+-- drops/transposes characters under load and handles embedded newlines
+-- inconsistently. We save and restore the clipboard around the paste.
+local function pasteAndEnter(command)
+	local saved = hs.pasteboard.getContents()
+	hs.pasteboard.setContents(command)
+	hs.eventtap.keyStroke({ "cmd" }, "v")
+	hs.timer.doAfter(0.15, function()
+		hs.eventtap.keyStroke({}, "return")
+		hs.timer.doAfter(0.1, function()
+			if saved ~= nil then hs.pasteboard.setContents(saved) end
+		end)
+	end)
+end
+
+-- Bring Ghostty forward with a fresh window, then paste `command` + Enter
+-- into it. Works whether Ghostty was already running, running with no
+-- windows (menu-bar-only), or not running at all.
+local function runInNewGhosttyWindow(command)
+	local ghostty = hs.application.get("Ghostty")
+	local hasWindow = ghostty and #ghostty:allWindows() > 0
+
+	if hasWindow then
+		ghostty:activate()
+		hs.timer.doAfter(0.15, function()
+			-- Cmd+N for a fresh shell, since an existing window may have a
+			-- partial command typed, be running vim/claude, etc.
+			hs.eventtap.keyStroke({ "cmd" }, "n")
+			-- Wait for the new window's shell to reach a prompt.
+			hs.timer.doAfter(0.6, function() pasteAndEnter(command) end)
+		end)
+		return
+	end
+
+	-- Launch (or reopen) Ghostty; it will open exactly one window.
+	hs.execute("/usr/bin/open -a Ghostty")
+	local tries = 0
+	local function waitThenPaste()
+		tries = tries + 1
+		local g = hs.application.get("Ghostty")
+		if g and #g:allWindows() > 0 then
+			g:activate()
+			hs.timer.doAfter(0.5, function() pasteAndEnter(command) end)
+			return
+		end
+		if tries < 40 then
+			hs.timer.doAfter(0.1, waitThenPaste)
+		else
+			hs.alert.show("Ghostty did not open a window")
+		end
+	end
+	waitThenPaste()
+end
+
+hs.hotkey.bind({}, "F17", function()
+	local p = nextNotePath()
+	local dir = os.getenv("HOME") .. "/mygit/ej/notes"
+	-- cd into the notes dir first so `ls`/tab-completion is easy after vim
+	-- exits, but vim the absolute path so shell history stays useful from
+	-- any cwd.
+	runInNewGhosttyWindow("cd " .. shq(dir) .. " && vim " .. shq(p))
+end)
+
+-- F18: open the current repo/PR on GitHub, using the cwd captured by the
+-- shell precmd hook (see README: "Shell sidechannel for F18").
+local function lastShellCwd()
+	local path = os.getenv("HOME") .. "/.cache/last-shell-cwd"
+	local f = io.open(path, "r")
+	if not f then return nil end
+	local cwd = f:read("*l")
+	f:close()
+	if cwd and cwd ~= "" then return cwd end
+	return nil
+end
+
+hs.hotkey.bind({}, "F18", function()
+	local cwd = lastShellCwd()
+	if not cwd then
+		hs.alert.show("No cached shell cwd. Install the precmd hook (see README).", 4)
+		return
+	end
+	-- `gh pr view --web` opens the PR for the current branch if one exists;
+	-- otherwise it exits non-zero and we fall through to `gh browse`, which
+	-- opens the repo root.
+	local cmd = string.format(
+		"cd %s && { gh pr view --web 2>&1 || gh browse 2>&1 ; }",
+		shq(cwd)
+	)
+	local out, ok = hs.execute(cmd)
+	if not ok then
+		hs.alert.show("gh failed in " .. cwd .. ": " .. (out or ""), 5)
+	end
+end)

@@ -8,11 +8,14 @@ An F-key press focuses a chosen app on the built-in Retina display, filling the 
 
 ### Current bindings
 
-| Key | App |
+| Key | Action |
 |---|---|
-| F13 | Slack |
-| F14 | Gitodo |
-| F15 | Google Chrome |
+| F13 | Focus/cycle Slack on the MacBook display |
+| F14 | Focus/cycle Gitodo on the MacBook display |
+| F15 | Focus/cycle Google Chrome on the MacBook display |
+| F16 | Toggle default-input mic mute |
+| F17 | New timestamped note (`YYYYMMDDTHHMMSS.md`) in `~/mygit/ej/notes/`, opened in vim inside Ghostty |
+| F18 | Open the current repo/PR on GitHub (requires shell hook, see below) |
 
 Each F-key is emitted by the Cheapino split keyboard, configured (via [Vial](https://vial.rocks/)) to remap one of its letter keys to the corresponding F-key. The main keyboard still types the original letter normally; only the secondary keyboard triggers the jump. F13-F19 are chosen because they have no default macOS bindings and never collide with anything a normal keyboard emits.
 
@@ -45,7 +48,57 @@ The second argument is a Lua pattern matched against screen names via `hs.screen
    - If in native macOS fullscreen (its own Space), exit fullscreen, wait 1.2s for the Space animation to complete, then retry. Without that wait, the move silently no-ops because the window has not yet left its Space.
    - `win:setFrame(target:frame())` sizes the window to fill the target screen. This is deliberately NOT native macOS fullscreen, to avoid spawning a new Space every invocation.
 
-### Why `setFrame` instead of `setFullScreen(true)`
+## F16: mic mute toggle
+
+Toggles the muted state of the default macOS input device via `hs.audiodevice`. Works globally, regardless of which app is frontmost, which is the whole point: you can mute/unmute during a Zoom/Slack/Meet call without hunting for the right window. An alert flashes "Mic muted" or "Mic on" so there is no ambiguity.
+
+## F17: new timestamped note, opened in vim inside Ghostty
+
+Press F17 and a new file is created at `~/mygit/ej/notes/YYYYMMDDTHHMMSS.md`. A fresh Ghostty window opens with `vim <path>` already running, ready to type. The directory is created if missing.
+
+Second-level granularity is enough for uniqueness in practice: you would have to press F17 twice in the same second to collide, in which case both presses touch and open the same file (benign). This avoids a per-day counter entirely.
+
+### Why paste + Return instead of typing
+
+The command is injected into the new Ghostty window via the clipboard (`Cmd+V` followed by a separate `Return` event), with the original clipboard contents saved and restored. Initially this used `hs.eventtap.keyStrokes(command .. "\n")`, but under load that function drops or transposes characters and handles embedded newlines inconsistently; paste is deterministic and the Return is a dedicated event that always fires.
+
+### Why Cmd+N when Ghostty already has windows
+
+The "bring Ghostty forward + new window + run vim" flow needs to work in three states: Ghostty already running with windows, running menu-bar-only, or not running at all. When Ghostty already has windows, `Cmd+N` is issued so the paste never lands in a window that has a partial command typed, a vim session, or a running `claude` prompt. When Ghostty is cold-launched it comes up with exactly one fresh window, so no `Cmd+N` is needed.
+
+## F18: open the current repo or PR on GitHub
+
+Press F18 and the browser opens either the pull request for your current branch, or the repo root if no PR exists. Detection uses `gh`:
+
+```sh
+gh pr view --web 2>&1 || gh browse 2>&1
+```
+
+So `gh` needs to be installed and authenticated (`gh auth status`).
+
+### Shell sidechannel for F18
+
+Hammerspoon cannot directly ask Ghostty "what is the cwd of the frontmost terminal session". Ghostty does not expose a rich AppleScript API, and mapping a focused window back to its specific child shell process is not reliable from outside. The approach here is a 3-line zsh `precmd` hook that writes the current working directory to `~/.cache/last-shell-cwd` on every prompt. Hammerspoon reads that file when F18 is pressed.
+
+Add to `~/.zshrc`:
+
+```zsh
+mkdir -p ~/.cache
+__save_shell_cwd() { print -r -- "$PWD" > ~/.cache/last-shell-cwd }
+precmd_functions+=(__save_shell_cwd)
+```
+
+Then open a new terminal (or `source ~/.zshrc`) so the hook starts running.
+
+### Why this works even inside Claude Code / vim / ssh
+
+The `precmd` hook fires when the shell displays a prompt. The file thus captures the cwd of the shell *before* it hands off to whatever long-running foreground process you then start (vim, claude, ssh, etc.). When you press F18 while deep inside a Claude Code conversation, the file still reflects the directory where you originally ran `claude`, which is almost always the repo directory you care about.
+
+### Caveat: multiple terminals
+
+The sidechannel is a single shared file. If you have two Ghostty tabs, shell A in repo X and shell B in repo Y, the file reflects whichever last had a prompt. Pressing F18 while focused on a shell that has not prompted since will open the wrong repo. In practice this rarely bites: the shell you were just in is usually the one that last prompted.
+
+## Why `setFrame` instead of `setFullScreen(true)`
 
 Native fullscreen (the green-button behavior) creates a separate Space for the window. That means every hotkey press would either create a new Space or leave the window stranded in an old one, fighting the user's Mission Control state. Filling the screen with `setFrame` keeps the app on the current Space and is the behavior most people actually want from "put X fullscreen on this monitor".
 
