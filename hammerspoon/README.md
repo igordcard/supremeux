@@ -79,25 +79,36 @@ So `gh` needs to be installed and authenticated (`gh auth status`).
 
 ### Shell sidechannel for F18
 
-Hammerspoon cannot directly ask Ghostty "what is the cwd of the frontmost terminal session". Ghostty does not expose a rich AppleScript API, and mapping a focused window back to its specific child shell process is not reliable from outside. The approach here is a 3-line zsh `precmd` hook that writes the current working directory to `~/.cache/last-shell-cwd` on every prompt. Hammerspoon reads that file when F18 is pressed.
+Hammerspoon cannot directly ask Ghostty "what is the cwd of the frontmost terminal session". Ghostty does not expose a rich AppleScript API, the window title is truncated with an ellipsis for long paths so it cannot be parsed back to an absolute path, and mapping a focused window back to its specific child shell process is not reliable from outside. The approach here is a set of zsh hooks that maintain one file per shell PID under `~/.cache/shell-cwd/`. On F18, Hammerspoon picks the most recently modified file (via `ls -t`) and reads the cwd from it. That file corresponds to the shell the user has most recently interacted with, which in practice tracks the frontmost tab.
 
 Add to `~/.zshrc`:
 
 ```zsh
-mkdir -p ~/.cache
-__save_shell_cwd() { print -r -- "$PWD" > ~/.cache/last-shell-cwd }
+mkdir -p ~/.cache/shell-cwd
+__save_shell_cwd() { print -r -- "$PWD" > ~/.cache/shell-cwd/$$ }
 precmd_functions+=(__save_shell_cwd)
+preexec_functions+=(__save_shell_cwd)
+chpwd_functions+=(__save_shell_cwd)
+trap '/bin/rm -f ~/.cache/shell-cwd/$$' EXIT
 ```
 
-Then open a new terminal (or `source ~/.zshrc`) so the hook starts running.
+Then open a new terminal (or `source ~/.zshrc`) so the hooks start running.
+
+The three hooks cover complementary events:
+
+- `precmd` fires before each prompt is displayed. Catches the steady state "shell is waiting for input in this directory".
+- `preexec` fires just before a command runs. Catches activity even when the user is launching a long-running program (`vim`, `claude`, `ssh`) that would otherwise suppress further prompts.
+- `chpwd` fires after every directory change. Catches `cd` that happens inside a single compound command (e.g. `cd ~/repo && claude`), where `preexec` already captured the previous cwd.
+
+The `trap` on EXIT removes the file when the shell terminates, so stale per-PID files do not accumulate. Even without the trap, stale files are harmless: they have older mtimes than the user's current activity, so `ls -t` never picks them.
 
 ### Why this works even inside Claude Code / vim / ssh
 
-The `precmd` hook fires when the shell displays a prompt. The file thus captures the cwd of the shell *before* it hands off to whatever long-running foreground process you then start (vim, claude, ssh, etc.). When you press F18 while deep inside a Claude Code conversation, the file still reflects the directory where you originally ran `claude`, which is almost always the repo directory you care about.
+The `preexec` hook fires just before the long-running command starts, so the file captures the cwd at the moment you ran `claude`, `vim`, or `ssh`. When you press F18 while deep inside a Claude Code conversation, the file still reflects the directory where you launched `claude`, which is almost always the repo directory you care about.
 
-### Caveat: multiple terminals
+### Caveat: multiple terminals without recent activity in the frontmost one
 
-The sidechannel is a single shared file. If you have two Ghostty tabs, shell A in repo X and shell B in repo Y, the file reflects whichever last had a prompt. Pressing F18 while focused on a shell that has not prompted since will open the wrong repo. In practice this rarely bites: the shell you were just in is usually the one that last prompted.
+The "most recently touched file wins" heuristic fails in one specific case: if shell A in repo X has recently had activity, and you then switch focus to shell B in repo Y without typing anything or pressing Enter, F18 opens repo X. Typing one character plus Enter in B (or any `cd`) refreshes B's timestamp and fixes it. In day-to-day use this rarely bites.
 
 ## Why `setFrame` instead of `setFullScreen(true)`
 

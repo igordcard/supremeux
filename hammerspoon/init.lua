@@ -210,10 +210,17 @@ hs.hotkey.bind({}, "F17", function()
 end)
 
 -- F18: open the current repo/PR on GitHub, using the cwd captured by the
--- shell precmd hook (see README: "Shell sidechannel for F18").
-local function lastShellCwd()
-	local path = os.getenv("HOME") .. "/.cache/last-shell-cwd"
-	local f = io.open(path, "r")
+-- shell hooks (see README: "Shell sidechannel for F18"). Each shell writes
+-- to ~/.cache/shell-cwd/<pid>, and we read the most recently modified file,
+-- which is the shell the user most recently interacted with (a decent
+-- proxy for "the frontmost Ghostty tab").
+local function mostRecentShellCwd()
+	local dir = os.getenv("HOME") .. "/.cache/shell-cwd"
+	local newest = hs.execute("/bin/ls -t " .. shq(dir) .. " 2>/dev/null | head -1")
+	if not newest or newest == "" then return nil end
+	newest = newest:gsub("%s+$", "")
+	if newest == "" then return nil end
+	local f = io.open(dir .. "/" .. newest, "r")
 	if not f then return nil end
 	local cwd = f:read("*l")
 	f:close()
@@ -222,16 +229,17 @@ local function lastShellCwd()
 end
 
 hs.hotkey.bind({}, "F18", function()
-	local cwd = lastShellCwd()
+	local cwd = mostRecentShellCwd()
 	if not cwd then
-		hs.alert.show("No cached shell cwd. Install the precmd hook (see README).", 4)
+		hs.alert.show("No cached shell cwd. Install the shell hooks (see README).", 4)
 		return
 	end
 	-- `gh pr view --web` opens the PR for the current branch if one exists;
 	-- otherwise it exits non-zero and we fall through to `gh browse`, which
-	-- opens the repo root.
+	-- opens the repo root. Prepend Homebrew paths because hs.execute runs
+	-- with a minimal PATH that excludes /opt/homebrew/bin.
 	local cmd = string.format(
-		"cd %s && { gh pr view --web 2>&1 || gh browse 2>&1 ; }",
+		"export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH && cd %s && { gh pr view --web 2>&1 || gh browse 2>&1 ; }",
 		shq(cwd)
 	)
 	local out, ok = hs.execute(cmd)
