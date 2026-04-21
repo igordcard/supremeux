@@ -339,3 +339,47 @@ end)
 hs.hotkey.bind({ "shift" }, "F16", function()
 	runInFreshGhosttyShell("t", "claude")
 end)
+
+-- "F22" (actually Shift+F17): open a new Ghostty window and place it
+-- on the DELL (second) monitor. Uses Cmd+N when Ghostty has windows,
+-- or launches Ghostty if it does not.
+--
+-- The newly-opened window becomes focused, so focusedWindow() after a
+-- small settle delay is the one we want to move.
+local function moveGhosttyFocusedToDell()
+	local ghostty = hs.application.get("Ghostty")
+	if not ghostty then return end
+	local target = hs.screen.find("DELL")
+	if not target then return end
+	local win = ghostty:focusedWindow() or ghostty:mainWindow()
+	if win then win:moveToScreen(target) end
+end
+
+hs.hotkey.bind({ "shift" }, "F17", function()
+	local ghostty = hs.application.get("Ghostty")
+	local hasWindow = ghostty and #ghostty:allWindows() > 0
+
+	if hasWindow then
+		ghostty:activate()
+		hs.timer.doAfter(0.15, function()
+			hs.eventtap.keyStroke({ "cmd" }, "n")
+			hs.timer.doAfter(0.5, moveGhosttyFocusedToDell)
+		end)
+		return
+	end
+
+	hs.execute("/usr/bin/open -a Ghostty")
+	local tries = 0
+	local function waitAndMove()
+		tries = tries + 1
+		local g = hs.application.get("Ghostty")
+		if g and #g:allWindows() > 0 then
+			hs.timer.doAfter(0.3, moveGhosttyFocusedToDell)
+			return
+		end
+		if tries < 40 then
+			hs.timer.doAfter(0.1, waitAndMove)
+		end
+	end
+	waitAndMove()
+end)

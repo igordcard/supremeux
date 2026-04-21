@@ -19,6 +19,7 @@ An F-key press focuses a chosen app on the built-in Retina display, filling the 
 | F19 | Focus/cycle Zoom on the MacBook display |
 | F20 | Open a fresh Ghostty window in `$HOME` and run `claude` |
 | Shift+F16 | Open a new Ghostty tab (inherits current tab's cwd) and run `claude` |
+| Shift+F17 | Open a new Ghostty window on the DELL (second) monitor; works even if Ghostty is closed |
 
 > Note: the Cheapino key physically labeled F21 is remapped in Vial to emit `Shift+F16`. macOS only routes F-keys up to F20 through its virtual-keycode map, so anything past F20 has to be expressed as a modifier + standard F-key combo. `Shift+F16` is safe because the main keyboard cannot produce F16 at all, so the combo never collides.
 
