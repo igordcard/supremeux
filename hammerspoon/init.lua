@@ -355,6 +355,22 @@ local function moveGhosttyFocusedToDell()
 	if win then win:moveToScreen(target) end
 end
 
+-- "F23" (actually Shift+F18): cycle focus through every Ghostty
+-- window on any screen, without moving or resizing them. Reuses the
+-- same per-app cycle state that F13-F15/F19 use, so it picks a
+-- different window on each press and wraps around.
+hs.hotkey.bind({ "shift" }, "F18", function()
+	local ghostty = hs.application.get("Ghostty")
+	if not ghostty or #ghostty:allWindows() == 0 then
+		hs.execute("/usr/bin/open -a Ghostty")
+		return
+	end
+	local win = pickAppWindow(ghostty, "Ghostty")
+	if not win then return end
+	if win:isMinimized() then win:unminimize() end
+	win:focus()
+end)
+
 hs.hotkey.bind({ "shift" }, "F17", function()
 	local ghostty = hs.application.get("Ghostty")
 	local hasWindow = ghostty and #ghostty:allWindows() > 0
