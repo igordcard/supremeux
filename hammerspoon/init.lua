@@ -371,6 +371,27 @@ hs.hotkey.bind({ "shift" }, "F18", function()
 	win:focus()
 end)
 
+-- "F24" (actually Shift+F19): paste "LGTM" into the frontmost field and
+-- press Cmd+Return to submit. Designed for one-tap approval on GitHub PR
+-- review comment boxes (Cmd+Enter = "Submit"), but works anywhere the
+-- same shortcut submits a comment (Slack, Linear, etc.). Uses paste
+-- rather than keyStrokes so the four letters never get dropped or
+-- transposed under load.
+hs.hotkey.bind({ "shift" }, "F19", function()
+	local saved = hs.pasteboard.getContents()
+	hs.pasteboard.setContents("LGTM")
+	hs.eventtap.keyStroke({ "cmd" }, "v")
+	hs.timer.doAfter(0.15, function()
+		hs.eventtap.keyStroke({ "cmd" }, "return")
+		hs.timer.doAfter(0.15, function()
+			hs.eventtap.keyStroke({}, "return")
+			hs.timer.doAfter(0.1, function()
+				if saved ~= nil then hs.pasteboard.setContents(saved) end
+			end)
+		end)
+	end)
+end)
+
 hs.hotkey.bind({ "shift" }, "F17", function()
 	local ghostty = hs.application.get("Ghostty")
 	local hasWindow = ghostty and #ghostty:allWindows() > 0
