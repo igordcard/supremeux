@@ -210,9 +210,7 @@ local function nextNotePath()
 	local dir = home .. "/mygit/ej/notes"
 	hs.execute("/bin/mkdir -p " .. shq(dir))
 	local stamp = os.date("%Y%m%dT%H%M%S")
-	local p = string.format("%s/%s.md", dir, stamp)
-	hs.execute("/usr/bin/touch " .. shq(p))
-	return p
+	return string.format("%s/%s.md", dir, stamp)
 end
 
 -- Paste `command` into the frontmost app via the clipboard, then send

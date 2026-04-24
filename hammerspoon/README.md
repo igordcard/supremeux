@@ -94,7 +94,7 @@ The handler tracks the presumed mute state locally and flips it on every press. 
 
 ## F17: new timestamped note, opened in vim inside Ghostty
 
-Press F17 and a new file is created at `~/mygit/ej/notes/YYYYMMDDTHHMMSS.md`. A fresh Ghostty window opens with `vim <path>` already running, ready to type. The directory is created if missing.
+Press F17 and a fresh Ghostty window opens with `vim ~/mygit/ej/notes/YYYYMMDDTHHMMSS.md` already running, ready to type. The file itself is only created if/when you save from vim, so dismissing without writing leaves no empty notes behind. The directory is created if missing.
 
 Second-level granularity is enough for uniqueness in practice: you would have to press F17 twice in the same second to collide, in which case both presses touch and open the same file (benign). This avoids a per-day counter entirely.
 
