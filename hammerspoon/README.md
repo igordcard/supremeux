@@ -47,10 +47,10 @@ Each value is a Lua pattern matched against screen names via `hs.screen.find`, s
 To list the screen names macOS currently reports, open the Hammerspoon Console (menu-bar icon -> Console) and run:
 
 ```lua
-hs.fnutils.map(hs.screen.allScreens(), function(s) return s:name() end)
+hs.inspect(hs.fnutils.map(hs.screen.allScreens(), function(s) return s:name() end))
 ```
 
-That returns something like `{ "DELL U2718Q", "Built-in Retina Display" }`. Pick a unique substring from each and drop it into the two variables above.
+`hs.inspect` is needed because the console prints a bare `table: 0x...` address otherwise. You will get something like `{ "DELL U2718Q", "Built-in Retina Display" }`. Pick a unique substring from each and drop it into the two variables above.
 
 ### Adding another app
 
