@@ -136,6 +136,25 @@ hs.hotkey.bind({ "ctrl" }, "F13", function() focusAppOnScreen("Slack", SECONDARY
 hs.hotkey.bind({ "ctrl" }, "F14", function() focusAppOnScreen("Gitodo", SECONDARY_SCREEN) end)
 hs.hotkey.bind({ "ctrl" }, "F15", function() focusAppOnScreen("Google Chrome", SECONDARY_SCREEN) end)
 
+-- Ctrl+F16/F17: move the currently focused window to the primary/secondary
+-- display. Unlike the focus hotkeys above, this does not resize or cycle
+-- windows; it just relocates whatever is focused, preserving its frame
+-- relative to the new screen.
+local function moveFocusedWindowTo(screenPattern)
+	local win = hs.window.focusedWindow()
+	if not win then return end
+	local target = hs.screen.find(screenPattern)
+	if not target then
+		local names = hs.fnutils.map(hs.screen.allScreens(), function(s) return s:name() end)
+		hs.alert.show("No target. Screens: " .. hs.inspect(names))
+		return
+	end
+	win:moveToScreen(target)
+end
+
+hs.hotkey.bind({ "ctrl" }, "F16", function() moveFocusedWindowTo(PRIMARY_SCREEN) end)
+hs.hotkey.bind({ "ctrl" }, "F17", function() moveFocusedWindowTo(SECONDARY_SCREEN) end)
+
 -- Shell quote a string for inclusion in a shell command.
 local function shq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
 

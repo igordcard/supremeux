@@ -9,7 +9,7 @@ Cheapino is a split 3x5+3: three rows of five alpha columns per side, plus three
 ```
 LEFT HALF                                        RIGHT HALF
 +------+------+------+------+------+             +------+------+------+------+------+
-|      |      |      |      |      |             | S+F17|      | F20  | S+F16| C+F13|
+| C+F16|      |      |      |      |             | C+F17| S+F17| F20  | S+F16| C+F13|
 +------+------+------+------+------+             +------+------+------+------+------+
 |      |      |      |      |      |             |      |      |      | F18  | C+F14|
 +------+------+------+------+------+             +------+------+------+------+------+
@@ -45,7 +45,8 @@ LEFT HALF                                        RIGHT HALF
 
 | Key position | Emits | Hammerspoon action |
 |---|---|---|
-| Top row, index (Y pos) | `Shift+F17` | Open a new Ghostty window on the secondary monitor |
+| Top row, index (Y pos) | `Ctrl+F17` | Move the focused window to the secondary (Dell) display |
+| Top row, index (U pos) | `Shift+F17` | Open a new Ghostty window on the secondary monitor |
 | Top row, middle (I pos) | `F20` | Open a fresh Ghostty window in `$HOME` and run `claude` |
 | Top row, ring (O pos) | `Shift+F16` | Open a new Ghostty tab inheriting cwd and run `claude` |
 | Top row, pinky (P pos) | `Ctrl+F13` | Focus/cycle Slack on the secondary monitor |
@@ -57,6 +58,7 @@ LEFT HALF                                        RIGHT HALF
 
 | Key position | Emits | Hammerspoon action |
 |---|---|---|
+| Top row, pinky (Q pos) | `Ctrl+F16` | Move the focused window to the primary (MacBook) display |
 | Bottom row, pinky (Z pos) | `F19` | Focus/cycle Zoom on the primary monitor |
 | Bottom row, index (B pos) | `Shift+F18` | Cycle focus through every Ghostty window, on any screen, no movement |
 

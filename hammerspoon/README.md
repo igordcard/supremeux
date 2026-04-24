@@ -25,6 +25,8 @@ An F-key press focuses a chosen app on the built-in Retina display, filling the 
 | Ctrl+F13 | Focus/cycle Slack on the secondary monitor |
 | Ctrl+F14 | Focus/cycle Gitodo on the secondary monitor |
 | Ctrl+F15 | Focus/cycle Google Chrome on the secondary monitor |
+| Ctrl+F16 | Move the focused window to the MacBook display |
+| Ctrl+F17 | Move the focused window to the DELL (second) display |
 
 > Note: the Cheapino key physically labeled F21 is remapped in Vial to emit `Shift+F16`. macOS only routes F-keys up to F20 through its virtual-keycode map, so anything past F20 has to be expressed as a modifier + standard F-key combo. `Shift+F16` is safe because the main keyboard cannot produce F16 at all, so the combo never collides.
 
