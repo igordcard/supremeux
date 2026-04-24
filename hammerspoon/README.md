@@ -158,7 +158,11 @@ Native fullscreen (the green-button behavior) creates a separate Space for the w
 ## Installation
 
 1. Install Hammerspoon: `brew install --cask hammerspoon`
-2. Copy `init.lua` to `~/.hammerspoon/init.lua`
+2. Symlink this repo's `init.lua` to `~/.hammerspoon/init.lua`:
+   ```sh
+   ln -sf "$(pwd)/init.lua" ~/.hammerspoon/init.lua
+   ```
+   (Run from `hammerspoon/` in this repo. A symlink means edits to the repo copy take effect on the next Reload Config — no separate mirror step.)
 3. Launch Hammerspoon.
 4. Grant permissions (see below).
 5. From the Hammerspoon menu bar icon, choose **Reload Config** after any edit.

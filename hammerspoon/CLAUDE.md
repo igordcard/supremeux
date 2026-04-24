@@ -19,3 +19,13 @@ Any change in this directory must keep these four artifacts in lockstep, within 
 
 - Diff `.vil` layer 0 against the `init.lua` bindings. Every non-`KC_NO` cell on layer 0 (excluding the encoder click) should correspond to exactly one `hs.hotkey.bind`, and vice versa.
 - The `.vil` should only ever contain Hammerspoon-mapped keys plus the encoder. If a Cheapino-direct key gets added (something that does not go through Hammerspoon, like the encoder), call that out explicitly in `LAYOUT.md`.
+
+## Live Hammerspoon config
+
+`~/.hammerspoon/init.lua` is expected to be a symlink to this repo's `init.lua`, so editing the repo file is enough and Reload Config always runs the committed code. Before editing, confirm the symlink is still in place:
+
+```sh
+readlink ~/.hammerspoon/init.lua
+```
+
+If it returns a path under this repo, you are good. If the file is a regular copy instead, either re-establish the symlink (`ln -sf <repo>/hammerspoon/init.lua ~/.hammerspoon/init.lua`) or remember to mirror every edit with `cp`.
