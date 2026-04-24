@@ -33,15 +33,34 @@ When the target app has multiple standard windows (e.g. several Chrome windows),
 
 Cycling order is by window ID (stable across focus changes) rather than MRU order. Using MRU would make cycling collapse to a single window: focusing a window bumps it to the front of `app:allWindows()`, so the "next" window after it would just be itself.
 
+### Configuring your monitors
+
+The top of `init.lua` defines two variables so you can point this config at your own displays without hunting through the file:
+
+```lua
+local PRIMARY_SCREEN = "Retina Display" -- MacBook built-in display
+local SECONDARY_SCREEN = "DELL"         -- External monitor
+```
+
+Each value is a Lua pattern matched against screen names via `hs.screen.find`, so a unique substring is enough. Beware that `-` is a Lua pattern metacharacter: use `"Retina Display"` rather than `"Built-in Retina Display"`, or escape as `"Built%-in Retina Display"`.
+
+To list the screen names macOS currently reports, open the Hammerspoon Console (menu-bar icon -> Console) and run:
+
+```lua
+hs.fnutils.map(hs.screen.allScreens(), function(s) return s:name() end)
+```
+
+That returns something like `{ "DELL U2718Q", "Built-in Retina Display" }`. Pick a unique substring from each and drop it into the two variables above.
+
 ### Adding another app
 
 Add one line to `init.lua`:
 
 ```lua
-hs.hotkey.bind({}, "F15", function() focusAppOnScreen("Linear", "Retina Display") end)
+hs.hotkey.bind({}, "F15", function() focusAppOnScreen("Linear", PRIMARY_SCREEN) end)
 ```
 
-The second argument is a Lua pattern matched against screen names via `hs.screen.find`, so a unique substring is enough. Beware that hyphens are pattern metacharacters: use `"Retina Display"` rather than `"Built-in Retina Display"`, or escape as `"Built%-in Retina Display"`.
+The second argument to `focusAppOnScreen` is any screen pattern string — you can reuse `PRIMARY_SCREEN`/`SECONDARY_SCREEN` or pass a literal pattern for a third monitor.
 
 ### How it works
 

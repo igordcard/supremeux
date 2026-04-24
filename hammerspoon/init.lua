@@ -1,3 +1,12 @@
+-- User-customizable monitor name patterns. Each is a Lua pattern matched
+-- against hs.screen names via hs.screen.find, so a unique substring is
+-- enough. Beware that `-` is a Lua pattern metacharacter, so "Built-in
+-- Retina Display" must be written as "Retina Display" or escaped as
+-- "Built%-in Retina Display". See the README for how to list your own
+-- monitor names.
+local PRIMARY_SCREEN = "Retina Display" -- MacBook built-in display
+local SECONDARY_SCREEN = "DELL"         -- External monitor
+
 -- Per-app state: remembers which window was last picked so repeated presses cycle.
 local lastWindowIdByApp = {}
 
@@ -112,10 +121,10 @@ local function focusAppOnScreen(appName, screenPattern)
 	tryPlace(1)
 end
 
-hs.hotkey.bind({}, "F13", function() focusAppOnScreen("Slack", "Retina Display") end)
-hs.hotkey.bind({}, "F14", function() focusAppOnScreen("Gitodo", "Retina Display") end)
-hs.hotkey.bind({}, "F15", function() focusAppOnScreen("Google Chrome", "Retina Display") end)
-hs.hotkey.bind({}, "F19", function() focusAppOnScreen("zoom.us", "Retina Display") end)
+hs.hotkey.bind({}, "F13", function() focusAppOnScreen("Slack", PRIMARY_SCREEN) end)
+hs.hotkey.bind({}, "F14", function() focusAppOnScreen("Gitodo", PRIMARY_SCREEN) end)
+hs.hotkey.bind({}, "F15", function() focusAppOnScreen("Google Chrome", PRIMARY_SCREEN) end)
+hs.hotkey.bind({}, "F19", function() focusAppOnScreen("zoom.us", PRIMARY_SCREEN) end)
 
 -- Shell quote a string for inclusion in a shell command.
 local function shq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
@@ -341,15 +350,15 @@ hs.hotkey.bind({ "shift" }, "F16", function()
 end)
 
 -- "F22" (actually Shift+F17): open a new Ghostty window and place it
--- on the DELL (second) monitor. Uses Cmd+N when Ghostty has windows,
--- or launches Ghostty if it does not.
+-- on the secondary monitor. Uses Cmd+N when Ghostty has windows, or
+-- launches Ghostty if it does not.
 --
 -- The newly-opened window becomes focused, so focusedWindow() after a
 -- small settle delay is the one we want to move.
-local function moveGhosttyFocusedToDell()
+local function moveGhosttyFocusedToSecondary()
 	local ghostty = hs.application.get("Ghostty")
 	if not ghostty then return end
-	local target = hs.screen.find("DELL")
+	local target = hs.screen.find(SECONDARY_SCREEN)
 	if not target then return end
 	local win = ghostty:focusedWindow() or ghostty:mainWindow()
 	if win then win:moveToScreen(target) end
@@ -400,7 +409,7 @@ hs.hotkey.bind({ "shift" }, "F17", function()
 		ghostty:activate()
 		hs.timer.doAfter(0.15, function()
 			hs.eventtap.keyStroke({ "cmd" }, "n")
-			hs.timer.doAfter(0.5, moveGhosttyFocusedToDell)
+			hs.timer.doAfter(0.5, moveGhosttyFocusedToSecondary)
 		end)
 		return
 	end
@@ -411,7 +420,7 @@ hs.hotkey.bind({ "shift" }, "F17", function()
 		tries = tries + 1
 		local g = hs.application.get("Ghostty")
 		if g and #g:allWindows() > 0 then
-			hs.timer.doAfter(0.3, moveGhosttyFocusedToDell)
+			hs.timer.doAfter(0.3, moveGhosttyFocusedToSecondary)
 			return
 		end
 		if tries < 40 then
