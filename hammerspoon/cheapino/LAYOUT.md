@@ -1,6 +1,6 @@
 # Cheapino layout for Hammerspoon
 
-Physical map of the Cheapino keys that emit combos `../init.lua` reacts to. Every other key on the board is unrelated to Hammerspoon and is deliberately omitted here.
+Physical map of the Cheapino keys that emit combos `../init.lua` reacts to. Every other key on the board is unrelated to Hammerspoon and is deliberately omitted here. The rotary encoder is included at the end for completeness even though it doesn't feed into Hammerspoon.
 
 ## Physical layout
 
@@ -59,3 +59,13 @@ LEFT HALF                                        RIGHT HALF
 |---|---|---|
 | Bottom row, pinky (Z pos) | `F19` | Focus/cycle Zoom on the primary monitor |
 | Bottom row, index (B pos) | `Shift+F18` | Cycle focus through every Ghostty window, on any screen, no movement |
+
+### Encoder (left half)
+
+Not wired to Hammerspoon; handled entirely by the keyboard firmware.
+
+| Action | Emits | Effect |
+|---|---|---|
+| Rotate clockwise | `KC_WH_D` | Scroll wheel down |
+| Rotate counter-clockwise | `KC_WH_U` | Scroll wheel up |
+| Click | `KC_MNXT` | Media next track |
