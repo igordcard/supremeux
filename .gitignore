@@ -1,0 +1,81 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.apdisk
+.DocumentRevisions-V100
+
+# Thumbnails
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+.netrwhist
+.vim/
+.nvimlog
+*.sublime-project
+*.sublime-workspace
+
+# Emacs
+\#*\#
+.\#*
+*.elc
+auto-save-list/
+tramp
+
+# Vim
+Session.vim
+.viminfo
+
+# Tags / index files
+tags
+TAGS
+.tags
+.ctags
+cscope.*
+
+# Archives / packages (unlikely in this repo, here as a safety net)
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Logs
+*.log
+
+# Env / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Hammerspoon local state (if someone symlinks this repo into ~/.hammerspoon)
+.hammerspoon/Spoons/
+.hammerspoon/*.log
+
+# OS-specific caches
+.cache/
