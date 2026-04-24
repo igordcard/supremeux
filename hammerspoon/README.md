@@ -22,9 +22,9 @@ An F-key press focuses a chosen app on the built-in Retina display, filling the 
 | Shift+F17 | Open a new Ghostty window on the DELL (second) monitor; works even if Ghostty is closed |
 | Shift+F18 | Cycle focus through every Ghostty window, wherever they are; no window movement |
 | Shift+F19 | Type `LGTM` into the focused field, submit with Cmd+Return, then press Return (PR approvals, comment boxes) |
-| Alt+F13 | Focus/cycle Slack on the secondary monitor |
-| Alt+F14 | Focus/cycle Gitodo on the secondary monitor |
-| Alt+F15 | Focus/cycle Google Chrome on the secondary monitor |
+| Ctrl+F13 | Focus/cycle Slack on the secondary monitor |
+| Ctrl+F14 | Focus/cycle Gitodo on the secondary monitor |
+| Ctrl+F15 | Focus/cycle Google Chrome on the secondary monitor |
 
 > Note: the Cheapino key physically labeled F21 is remapped in Vial to emit `Shift+F16`. macOS only routes F-keys up to F20 through its virtual-keycode map, so anything past F20 has to be expressed as a modifier + standard F-key combo. `Shift+F16` is safe because the main keyboard cannot produce F16 at all, so the combo never collides.
 

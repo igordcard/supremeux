@@ -126,14 +126,15 @@ hs.hotkey.bind({}, "F14", function() focusAppOnScreen("Gitodo", PRIMARY_SCREEN) 
 hs.hotkey.bind({}, "F15", function() focusAppOnScreen("Google Chrome", PRIMARY_SCREEN) end)
 hs.hotkey.bind({}, "F19", function() focusAppOnScreen("zoom.us", PRIMARY_SCREEN) end)
 
--- Alt+F13/F14/F15: same focus-and-cycle behavior, but targeting the
--- secondary monitor instead of the primary. Alt is chosen because Shift
--- is already used for unrelated Ghostty actions, and Cmd/Ctrl+Fxx can
--- collide with common app shortcuts; Alt+F13+ is effectively unclaimed
--- everywhere because those F-keys do not exist on most keyboards.
-hs.hotkey.bind({ "alt" }, "F13", function() focusAppOnScreen("Slack", SECONDARY_SCREEN) end)
-hs.hotkey.bind({ "alt" }, "F14", function() focusAppOnScreen("Gitodo", SECONDARY_SCREEN) end)
-hs.hotkey.bind({ "alt" }, "F15", function() focusAppOnScreen("Google Chrome", SECONDARY_SCREEN) end)
+-- Ctrl+F13/F14/F15: same focus-and-cycle behavior, but targeting the
+-- secondary monitor instead of the primary. Alt was the first pick but
+-- macOS binds Opt+F14/F15 to "open Display Settings" (holdover from
+-- when F14/F15 were the brightness keys on Apple keyboards). Ctrl+F13+
+-- is unclaimed by macOS: Ctrl+F2/F3 focus the menu bar/Dock, but those
+-- apply only to the low F-keys, not F13+.
+hs.hotkey.bind({ "ctrl" }, "F13", function() focusAppOnScreen("Slack", SECONDARY_SCREEN) end)
+hs.hotkey.bind({ "ctrl" }, "F14", function() focusAppOnScreen("Gitodo", SECONDARY_SCREEN) end)
+hs.hotkey.bind({ "ctrl" }, "F15", function() focusAppOnScreen("Google Chrome", SECONDARY_SCREEN) end)
 
 -- Shell quote a string for inclusion in a shell command.
 local function shq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
