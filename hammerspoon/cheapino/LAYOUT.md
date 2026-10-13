@@ -68,6 +68,6 @@ Not wired to Hammerspoon; handled entirely by the keyboard firmware.
 
 | Action | Emits | Effect |
 |---|---|---|
-| Rotate clockwise | `KC_WH_D` | Scroll wheel down |
-| Rotate counter-clockwise | `KC_WH_U` | Scroll wheel up |
+| Rotate clockwise | `KC_VOLU` | System volume up |
+| Rotate counter-clockwise | `KC_VOLD` | System volume down |
 | Click | `KC_MNXT` | Media next track |
